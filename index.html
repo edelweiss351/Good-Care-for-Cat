@@ -1,0 +1,402 @@
+```html
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pet Simulator Pixel Art - Merawat Kucing Imut</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Pixel & Cute Google -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=VT323&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background-color: #ffd6e8;
+            background-image: radial-gradient(#ffb3d9 1.5px, transparent 1.5px);
+            background-size: 20px 20px;
+            color: #5d4037;
+            user-select: none;
+            touch-action: manipulation;
+        }
+        
+        .pixel-font {
+            font-family: 'VT323', monospace;
+        }
+
+        /* Pixel Crisp Rendering */
+        canvas {
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            -ms-interpolation-mode: nearest-neighbor;
+        }
+
+        /* Cute Soft Container */
+        .cute-card {
+            background-color: #fff0f5;
+            border: 6px solid #ffb6c1;
+            box-shadow: 0 10px 25px rgba(255, 182, 193, 0.5), inset 0 0 0 4px #ffffff;
+            border-radius: 28px;
+        }
+
+        /* Cute Draggable Item Cards */
+        .drag-tool {
+            touch-action: none;
+            cursor: grab;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .drag-tool:active {
+            cursor: grabbing;
+            transform: scale(1.15) rotate(-5deg);
+            z-index: 100;
+        }
+
+        /* Soft Bar Container */
+        .bar-container {
+            background: #ffe4e1;
+            border: 2px solid #ffb6c1;
+            height: 16px;
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%;
+            transition: width 0.3s ease-in-out;
+            border-radius: 10px;
+        }
+
+        /* Floating Cute Effect */
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(0.8) rotate(0deg); opacity: 1; }
+            50% { transform: translateY(-30px) scale(1.2) rotate(10deg); }
+            100% { transform: translateY(-60px) scale(1) rotate(-10deg); opacity: 0; }
+        }
+        .floating-heart {
+            position: absolute;
+            animation: floatUp 1.2s ease-out forwards;
+            pointer-events: none;
+            font-size: 28px;
+            z-index: 60;
+        }
+
+        .breed-select-btn {
+            background: #ffffff;
+            border: 4px solid #ffb6c1;
+            border-radius: 20px;
+            transition: all 0.2s ease;
+        }
+        .breed-select-btn:hover, .breed-select-btn.selected {
+            background: #fff0f5;
+            border-color: #ff69b4;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 15px rgba(255, 105, 180, 0.25);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-2 sm:p-4">
+
+    <!-- Container Utama Application -->
+    <div class="w-full max-w-xl mx-auto">
+        
+        <!-- HEADER APP -->
+        <header class="text-center mb-3">
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-pink-500 drop-shadow-sm tracking-wide">
+                🎀 Kitty Care World 🐾
+            </h1>
+            <p class="text-xs sm:text-sm text-pink-400 font-semibold mt-0.5">Angkat Kucing, Main Pancingan & Tidurkan! 🐱✨</p>
+        </header>
+
+        <!-- MAIN CUTE CARD -->
+        <div class="cute-card p-4 sm:p-6 relative overflow-hidden">
+
+            <!-- SCENE 1: PILIHAN RAS & INPUT NAMA KUCING -->
+            <div id="selection-screen" class="block space-y-4">
+                <div class="text-center mb-2">
+                    <h2 class="text-lg font-bold text-pink-600">✨ Pilih Teman Bulumu ✨</h2>
+                    <p class="text-xs text-pink-400">Pilih ras favorit & beri nama yang menggemaskan!</p>
+                </div>
+
+                <!-- Preview Grid Ras Kucing -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div onclick="selectBreed('persian')" id="card-persian" class="breed-select-btn selected p-2 text-center cursor-pointer">
+                        <canvas id="canvas-persian" width="64" height="64" class="mx-auto w-16 h-16 sm:w-20 sm:h-20"></canvas>
+                        <div class="text-xs font-bold text-pink-600 mt-1">Persia</div>
+                        <div class="text-[10px] text-pink-400">Bulu Super Fluffy</div>
+                    </div>
+
+                    <div onclick="selectBreed('siamese')" id="card-siamese" class="breed-select-btn p-2 text-center cursor-pointer">
+                        <canvas id="canvas-siamese" width="64" height="64" class="mx-auto w-16 h-16 sm:w-20 sm:h-20"></canvas>
+                        <div class="text-xs font-bold text-pink-600 mt-1">Siamese</div>
+                        <div class="text-[10px] text-pink-400">Eksotis & Anggun</div>
+                    </div>
+
+                    <div onclick="selectBreed('calico')" id="card-calico" class="breed-select-btn p-2 text-center cursor-pointer">
+                        <canvas id="canvas-calico" width="64" height="64" class="mx-auto w-16 h-16 sm:w-20 sm:h-20"></canvas>
+                        <div class="text-xs font-bold text-pink-600 mt-1">Calico</div>
+                        <div class="text-[10px] text-pink-400">Belang 3 Warna</div>
+                    </div>
+
+                    <div onclick="selectBreed('scottish')" id="card-scottish" class="breed-select-btn p-2 text-center cursor-pointer">
+                        <canvas id="canvas-scottish" width="64" height="64" class="mx-auto w-16 h-16 sm:w-20 sm:h-20"></canvas>
+                        <div class="text-xs font-bold text-pink-600 mt-1">Scottish Fold</div>
+                        <div class="text-[10px] text-pink-400">Telinga Lipat Imut</div>
+                    </div>
+
+                    <div onclick="selectBreed('mainecoon')" id="card-mainecoon" class="breed-select-btn p-2 text-center cursor-pointer">
+                        <canvas id="canvas-mainecoon" width="64" height="64" class="mx-auto w-16 h-16 sm:w-20 sm:h-20"></canvas>
+                        <div class="text-xs font-bold text-pink-600 mt-1">Maine Coon</div>
+                        <div class="text-[10px] text-pink-400">Besar & Menggemaskan</div>
+                    </div>
+
+                    <div onclick="selectBreed('tuxedo')" id="card-tuxedo" class="breed-select-btn p-2 text-center cursor-pointer">
+                        <canvas id="canvas-tuxedo" width="64" height="64" class="mx-auto w-16 h-16 sm:w-20 sm:h-20"></canvas>
+                        <div class="text-xs font-bold text-pink-600 mt-1">Tuxedo</div>
+                        <div class="text-[10px] text-pink-400">Elegan Pattern Jas</div>
+                    </div>
+                </div>
+
+                <!-- Input Slot Nama -->
+                <div class="space-y-1.5 pt-2">
+                    <label class="block text-center text-xs font-bold text-pink-500">NAMA KUCINGMU:</label>
+                    <input type="text" id="cat-name-input" maxlength="12" value="Mochi" placeholder="Tulis nama..." class="w-full text-center bg-white border-2 border-pink-300 rounded-full py-2 px-4 text-pink-600 font-bold outline-none focus:border-pink-500 shadow-inner">
+                </div>
+
+                <!-- Tombol Start -->
+                <button onclick="startGame()" class="w-full bg-pink-400 hover:bg-pink-500 text-white py-3 rounded-full font-bold text-base shadow-lg hover:shadow-xl transition transform active:scale-95 mt-2">
+                    Mulai Bermain! 💖
+                </button>
+            </div>
+
+            <!-- SCENE 2: GAMEPLAY UTAMA SIMULASI DRAGGABLE & WALKING -->
+            <div id="game-screen" class="hidden space-y-3">
+                
+                <!-- TOP BAR: INFOS & NAMA -->
+                <div class="flex justify-between items-center bg-white px-3 py-2 rounded-2xl border-2 border-pink-200 shadow-sm">
+                    <div class="flex items-center gap-2">
+                        <span id="display-cat-name" class="font-bold text-pink-600 text-base">Mochi</span>
+                        <span id="display-cat-breed" class="text-xs text-pink-400 font-semibold">(Persia)</span>
+                    </div>
+                    <div class="text-xs font-bold text-pink-500 flex items-center gap-1 bg-pink-100 px-2.5 py-1 rounded-full">
+                        <span id="cat-mood-text">Sangat Bahagia 💖</span>
+                    </div>
+                </div>
+
+                <!-- VIEWPORT CANVAS GAME DENGAN DRAG AND DROP OBJECTS -->
+                <div id="canvas-container" class="relative flex justify-center items-center bg-pink-100 border-4 border-pink-300 rounded-2xl overflow-hidden shadow-inner h-64 sm:h-72">
+                    
+                    <!-- Canvas Utama 64x64 yang diskalakan besar -->
+                    <canvas id="main-game-canvas" width="64" height="64" class="w-full h-full object-contain cursor-grab active:cursor-grabbing"></canvas>
+
+                    <!-- Bubble Efek / Peringatan -->
+                    <div id="status-bubble" class="hidden absolute top-3 left-1/2 transform -translate-x-1/2 bg-white text-pink-600 px-3 py-1 rounded-full text-xs font-extrabold shadow-md animate-bounce border-2 border-pink-300 pointer-events-none">
+                        Meow! 🐾
+                    </div>
+                </div>
+
+                <!-- DRAGGABLE TOOLBAR / ALAT PERMAINAN -->
+                <div class="bg-white p-2.5 rounded-2xl border-2 border-pink-200">
+                    <p class="text-[11px] text-center font-bold text-pink-400 mb-1.5">👇 TARIK ALAT ATAU ANGKAT KUCINGNYA DIRECTLY ↓</p>
+                    <div class="grid grid-cols-6 gap-1.5 text-center">
+                        <!-- Tool 1: Makanan -->
+                        <div id="tool-food" class="drag-tool bg-amber-50 p-1.5 rounded-xl border-2 border-amber-200 flex flex-col items-center">
+                            <span class="text-xl">🐟</span>
+                            <span class="text-[9px] font-bold text-amber-700 mt-0.5">Makan</span>
+                        </div>
+                        <!-- Tool 2: Minuman -->
+                        <div id="tool-water" class="drag-tool bg-blue-50 p-1.5 rounded-xl border-2 border-blue-200 flex flex-col items-center">
+                            <span class="text-xl">🥛</span>
+                            <span class="text-[9px] font-bold text-blue-700 mt-0.5">Minum</span>
+                        </div>
+                        <!-- Tool 3: Sabun/Mandi -->
+                        <div id="tool-bath" class="drag-tool bg-cyan-50 p-1.5 rounded-xl border-2 border-cyan-200 flex flex-col items-center">
+                            <span class="text-xl">🧼</span>
+                            <span class="text-[9px] font-bold text-cyan-700 mt-0.5">Mandi</span>
+                        </div>
+                        <!-- Tool 4: Pancingan Bulu (Interactive Teaser) -->
+                        <div id="tool-wand" class="drag-tool bg-pink-50 p-1.5 rounded-xl border-2 border-pink-200 flex flex-col items-center">
+                            <span class="text-xl">🎣</span>
+                            <span class="text-[9px] font-bold text-pink-700 mt-0.5">Pancing</span>
+                        </div>
+                        <!-- Tool 5: Sisir Bulu -->
+                        <div id="tool-comb" class="drag-tool bg-purple-50 p-1.5 rounded-xl border-2 border-purple-200 flex flex-col items-center">
+                            <span class="text-xl">🪮</span>
+                            <span class="text-[9px] font-bold text-purple-700 mt-0.5">Sisir</span>
+                        </div>
+                        <!-- Tool 6: Kasur / Tidur -->
+                        <div id="tool-sleep" onclick="toggleSleep()" class="cursor-pointer hover:scale-105 transition bg-indigo-50 p-1.5 rounded-xl border-2 border-indigo-200 flex flex-col items-center">
+                            <span class="text-xl">💤</span>
+                            <span class="text-[9px] font-bold text-indigo-700 mt-0.5">Tidur</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STATS BARS -->
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div class="bg-white p-2 rounded-xl border border-pink-200">
+                        <div class="flex justify-between mb-1 font-bold">
+                            <span class="text-amber-500">🍗 Kenyang</span>
+                            <span id="val-hunger" class="text-pink-600">80%</span>
+                        </div>
+                        <div class="bar-container">
+                            <div id="bar-hunger" class="bar-fill bg-amber-400" style="width: 80%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-2 rounded-xl border border-pink-200">
+                        <div class="flex justify-between mb-1 font-bold">
+                            <span class="text-blue-400">💧 Haus</span>
+                            <span id="val-thirst" class="text-pink-600">85%</span>
+                        </div>
+                        <div class="bar-container">
+                            <div id="bar-thirst" class="bar-fill bg-blue-300" style="width: 85%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-2 rounded-xl border border-pink-200">
+                        <div class="flex justify-between mb-1 font-bold">
+                            <span class="text-cyan-500">🧼 Kebersihan</span>
+                            <span id="val-hygiene" class="text-pink-600">90%</span>
+                        </div>
+                        <div class="bar-container">
+                            <div id="bar-hygiene" class="bar-fill bg-cyan-300" style="width: 90%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-2 rounded-xl border border-pink-200">
+                        <div class="flex justify-between mb-1 font-bold">
+                            <span class="text-purple-500">⚡ Energi</span>
+                            <span id="val-energy" class="text-pink-600">80%</span>
+                        </div>
+                        <div class="bar-container">
+                            <div id="bar-energy" class="bar-fill bg-purple-400" style="width: 80%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sub Navigation & Petting Hint -->
+                <div class="flex justify-between items-center text-xs text-pink-400 font-semibold pt-1">
+                    <button onclick="resetGame()" class="hover:text-pink-600 underline transition">
+                        ← Ganti Kucing
+                    </button>
+                    <span>Tahan & tarik kucing untuk mengangkatnya! 🐾</span>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- AUDIO SYNTHESIZER RETRO CUTE -->
+    <script>
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function playSound(type) {
+            try {
+                if (!audioCtx) audioCtx = new AudioCtx();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'meow') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(500, now);
+                    osc.frequency.exponentialRampToValueAtTime(850, now + 0.12);
+                    osc.frequency.exponentialRampToValueAtTime(600, now + 0.3);
+
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'purr') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(120, now);
+                    osc.frequency.linearRampToValueAtTime(140, now + 0.1);
+                    osc.frequency.linearRampToValueAtTime(120, now + 0.2);
+
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                } else if (type === 'pop') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'snore') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.exponentialRampToValueAtTime(220, now + 0.4);
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                    osc.start(now);
+                    osc.stop(now + 0.5);
+                }
+            } catch(e) {}
+        }
+    </script>
+
+    <!-- MAIN GAME ENGINE: WALKING, DRAGGING & PANCINGAN -->
+    <script>
+        // State Game Utama
+        let catState = {
+            breed: 'persian',
+            name: 'Mochi',
+            hunger: 80,
+            thirst: 85,
+            hygiene: 90,
+            happiness: 85,
+            energy: 80,
+            // Physics & Walking State
+            posX: 24, 
+            posY: 34,
+            targetX: 24,
+            isWalking: false,
+            isHeld: false,
+            isSleeping: false,
+            facingRight: true,
+            walkTimer: 0,
+            actionAnimation: null,
+            animFrame: 0,
+            blink: false
+        };
+
+        // State Pancingan Interaktif
+        let wandState = {
+            active: false,
+            wandX: 50,
+            wandY: 20,
+            featherX: 45,
+            featherY: 38
+        };
+
+        const BED_POS = { x: 4, y: 38, w: 18, h: 12 };
+
+        const BREED_DATA = {
+            persian: { name: 'Persia', mainColor: '#fff5f7', shadeColor: '#ffd1dc', textureColor: '#ffffff', eyeColor: '#38ada9', features: 'fluffy' },
+            siamese: { name: 'Siamese', mainColor: '#ffeaa7', shadeColor: '#fdcb6e', textureColor: '#6c5ce7', eyeColor: '#74b9ff', features: 'siamese_points' },
+            calico: { name: 'Calico', mainColor: '#ffffff', shadeColor: '#ffeaa7', textureColor: '#ff7675', blackSpot: '#636e72', eyeColor: '#55efc4', features: 'calico_spots' },
+            scottish: { name: 'Scottish Fold', mainColor: '#dfe6e9', shadeColor: '#b2bec3', textureColor: '#f1f2f6', eyeColor: '#fdcb6e', features: 'folded_ears' },
+            mainecoon: { name: 'Maine Coon', mainColor: '#fab1a0', shadeColor: '#e17055', textureColor: '#ff7675', eyeColor: '#00b894', features: 'big_tufts' },
+            tuxedo: { name: 'Tuxedo', mainColor: '#2d3436', shadeColor: '#000000', textureColor: '#ffffff', eyeColor: '#fdcb6e', features: 'tuxedo_pattern' }
+        };
+
+        let mainCanvas, mainCtx;
+
+        window.onload = func
